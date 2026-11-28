@@ -676,3 +676,9 @@ Sam: everything custom per page (fonts, texts, headers, diagrams); every page mu
 - Grounds: white, pale tint, black bands, one long black section.
 Applied to Reviews: problem statement centred in serif under a bracket label; sign titles in serif; bracket labels on the chart, comparison and steps; comparison headed by one large white line on black; the missed-reviews figure in red.
 To do with this list: Invoicing, Estimates, Lead vetting, Booking, Follow-up, Free audit, Who it's for, then the remaining pages.
+
+### 23x. Homepage mix on Invoicing, Estimates, Lead vetting (Nov 27)
+- Estimates and Lead vetting: the plain numbered signs list replaced by three line drawings each (SIGN_PIC), titles in serif. Sign titles are serif on every page that has drawings.
+- Lead vetting: bracket label on the gate chart.
+- Invoicing: the three ages now in the homepage money chart colours (blue, amber, red) on the bars, the day chart and the list dots. Earlier I argued for all blue because the zoom flooded the screen with the last bar; the zoom is gone, so that reason is gone.
+Still plain numbered signs lists: every other build page.
